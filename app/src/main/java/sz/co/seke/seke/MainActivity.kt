@@ -69,6 +69,22 @@ class MainActivity : AppCompatActivity() {
             // Permission is not granted
         }
 
+
+        val BUF: Int = 8 * 1024
+
+        val bufferedReader = BufferedReader(FileReader("/proc/net/arp"), BUF)
+        var line: String? = bufferedReader.readLine()
+        while (line != null) {
+            Log.e("line",line)
+            if (line.contains("p2p")) {
+                var receiverIp = line.substring(0, line.indexOf(" "))
+            }
+            line = bufferedReader.readLine()
+
+        }
+
+
+
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA)
@@ -97,19 +113,36 @@ class MainActivity : AppCompatActivity() {
             // Permission has already been granted
         }
 
-        val scannerView = findViewById<CodeScannerView>(R.id.scanner_view)
-
-
-        codeScanner = CodeScanner(this, scannerView)
+        codeScanner = CodeScanner(this, scanner_view)
 
         // Parameters (default values)
         codeScanner.camera = CodeScanner.CAMERA_BACK // or CAMERA_FRONT or specific camera id
         codeScanner.formats = CodeScanner.ALL_FORMATS // list of type BarcodeFormat,
         // ex. listOf(BarcodeFormat.QR_CODE)
-        codeScanner.autoFocusMode = AutoFocusMode.SAFE // or CONTINUOUS
+        codeScanner.autoFocusMode = AutoFocusMode.CONTINUOUS // or CONTINUOUS
         codeScanner.scanMode = ScanMode.SINGLE // or CONTINUOUS or PREVIEW
-        codeScanner.isAutoFocusEnabled = true // Whether to enable auto focus or not
+        codeScanner.isAutoFocusEnabled = false // Whether to enable auto focus or not
         codeScanner.isFlashEnabled = false // Whether to enable flash or not
+
+        val scannerView = findViewById<CodeScannerView>(R.id.scanner_view)
+
+        val actionsConfig: MutableList<String> = mutableListOf()
+        adapter = ItemsAdapter(itemList)
+
+        items_recycler_view.setHasFixedSize(true)
+        items_recycler_view.layoutManager = LinearLayoutManager(this)
+        items_recycler_view.adapter = adapter
+
+        scan_btn.setOnClickListener {
+            scan()
+            scanner_view.visibility = View.VISIBLE
+            main_ly.visibility = View.GONE
+        }
+    }
+
+    fun scan(){
+
+        codeScanner.startPreview()
 
         // Callbacks
         codeScanner.decodeCallback = DecodeCallback {
@@ -117,6 +150,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
                 scanner_view.visibility = View.GONE
                 main_ly.visibility = View.VISIBLE
+                codeScanner.stopPreview()
                 Fuel.get("${getString(base_url)}/item/${it.text}")
                     .response{ request, response, result ->
                         println(request)
@@ -140,21 +174,15 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG).show()
             }
         }
+    }
 
-        scannerView.setOnClickListener {
-            codeScanner.startPreview()
-        }
-
-        val actionsConfig: MutableList<String> = mutableListOf()
-        adapter = ItemsAdapter(itemList)
-
-        items_recycler_view.setHasFixedSize(true)
-        items_recycler_view.layoutManager = LinearLayoutManager(this)
-        items_recycler_view.adapter = adapter
-
-        scan_btn.setOnClickListener {
-            scanner_view.visibility = View.VISIBLE
-            main_ly.visibility = View.GONE
+    override fun onBackPressed() {
+        if (codeScanner.isPreviewActive){
+            codeScanner.stopPreview()
+            scanner_view.visibility = View.GONE;
+            main_ly.visibility = View.VISIBLE
+        }else{
+            super.onBackPressed()
         }
     }
 
