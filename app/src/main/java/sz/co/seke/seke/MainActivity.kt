@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var codeScanner: CodeScanner
     private var itemList: MutableList<Item> = mutableListOf()
     private lateinit var adapter: ItemsAdapter
+    private var serverIp = ""
 
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<String>, grantResults: IntArray) {
@@ -68,22 +69,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("Permission","No")
             // Permission is not granted
         }
-
-
-        val BUF: Int = 8 * 1024
-
-        val bufferedReader = BufferedReader(FileReader("/proc/net/arp"), BUF)
-        var line: String? = bufferedReader.readLine()
-        while (line != null) {
-            Log.e("line",line)
-            if (line.contains("p2p")) {
-                var receiverIp = line.substring(0, line.indexOf(" "))
-            }
-            line = bufferedReader.readLine()
-
-        }
-
-
+        
 
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(this,
@@ -151,7 +137,7 @@ class MainActivity : AppCompatActivity() {
                 scanner_view.visibility = View.GONE
                 main_ly.visibility = View.VISIBLE
                 codeScanner.stopPreview()
-                Fuel.get("${getString(base_url)}/item/${it.text}")
+                Fuel.get("${serverIp}/item/${it.text}")
                     .response{ request, response, result ->
                         println(request)
                         println(response)
@@ -183,6 +169,25 @@ class MainActivity : AppCompatActivity() {
             main_ly.visibility = View.VISIBLE
         }else{
             super.onBackPressed()
+        }
+    }
+    
+    fun getServerIp(){
+        val BUF: Int = 8 * 1024
+
+        val bufferedReader = BufferedReader(FileReader("/proc/net/arp"), BUF)
+        var line: String? = bufferedReader.readLine()
+        while (line != null) {
+            Log.e("line",line)
+            if (line.contains("wlan")) {
+                Fuel.get("${line}:3002/ping")
+                    .response{ request, response, result ->  
+                        if(response.statusCode == 200){
+                            serverIp = line
+                        }
+                    }
+            }
+            line = bufferedReader.readLine()
         }
     }
 
