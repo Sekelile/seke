@@ -63,6 +63,8 @@ class MainActivity : AppCompatActivity() {
         System.setProperty("java.net.preferIPv4Stack", "true");
         setContentView(R.layout.activity_main)
 
+        getServerIp()
+
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
@@ -137,6 +139,7 @@ class MainActivity : AppCompatActivity() {
                 scanner_view.visibility = View.GONE
                 main_ly.visibility = View.VISIBLE
                 codeScanner.stopPreview()
+                Log.e("Server ip",serverIp)
                 Fuel.get("${serverIp}/item/${it.text}")
                     .response{ request, response, result ->
                         println(request)
@@ -146,6 +149,11 @@ class MainActivity : AppCompatActivity() {
                             Log.e("Itemobject",itemObject.toString())
                             itemList.add(Item(itemObject.getString("bar_code"),itemObject.getString("name"),itemObject.get("price").toString().toFloat()))
                             adapter.notifyDataSetChanged()
+                            var total = 0F;
+                            for (i in 0..itemList.size-1){
+                                total+=itemList[i].price
+                            }
+                            total_text_view.text = "Total: E $total"
                         }else{
                             Toast.makeText(this,"There was an error "+response.statusCode,Toast.LENGTH_LONG).show()
                         }
@@ -180,10 +188,12 @@ class MainActivity : AppCompatActivity() {
         while (line != null) {
             Log.e("line",line)
             if (line.contains("wlan")) {
-                Fuel.get("${line}:3002/ping")
+                Log.e("URL","http://${line.substring(0,line.indexOf(" "))}:3002/ping")
+                Fuel.get("http://${line.substring(0,line.indexOf(" "))}:3002/ping")
                     .response{ request, response, result ->  
                         if(response.statusCode == 200){
-                            serverIp = line
+                            Log.e("HOST",response.url.host)
+                            serverIp = "http://${response.url.host}:3002"
                         }
                     }
             }

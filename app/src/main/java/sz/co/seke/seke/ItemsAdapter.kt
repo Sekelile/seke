@@ -12,11 +12,13 @@ class ItemsAdapter (private val items: List<Item>) : RecyclerView.Adapter<ItemsA
     class ItemViewholder(var view: View) : RecyclerView.ViewHolder(view){
         val textView: TextView
         val icon: AppCompatImageView
+        val priceView:TextView
         val _view = view
 
         init {
             textView = view.findViewById(R.id.action_title)
             icon = view.findViewById(R.id.action_icon)
+            priceView = view.findViewById(R.id.price_view)
         }
     }
 
@@ -35,6 +37,7 @@ class ItemsAdapter (private val items: List<Item>) : RecyclerView.Adapter<ItemsA
     override fun onBindViewHolder(p0: ItemViewholder, p1: Int) {
         Log.e("title",items[p1].name)
         p0.textView.text = items[p1].name
+        p0.priceView.text = "E ${items[p1].price}"
         p0._view.setOnClickListener({
             selectItem(it,items[p1])
         })
