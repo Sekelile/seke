@@ -24,6 +24,10 @@ import java.io.FileReader
 import java.net.NetworkInterface
 import java.net.NetworkInterface.getNetworkInterfaces
 import java.net.SocketException
+import android.text.format.Formatter.formatIpAddress
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
+import android.text.format.Formatter
 
 
 val MY_PERMISSIONS_REQUEST_CAMERA:Int = 1000;
@@ -185,7 +189,23 @@ class MainActivity : AppCompatActivity() {
 
         val bufferedReader = BufferedReader(FileReader("/proc/net/arp"), BUF)
         var line: String? = bufferedReader.readLine()
-        while (line != null) {
+
+        val wifiMgr = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiInfo = wifiMgr.connectionInfo
+        val ip = wifiInfo.ipAddress
+        val ipAddress = Formatter.formatIpAddress(ip)
+
+        val base = ipAddress.substring(0,ipAddress.lastIndexOf("."))
+        for(i in 1..254){
+            Fuel.get("http://$base.$i:3002/ping")
+                .response{ request, response, result ->
+                    if(response.statusCode == 200){
+                        Log.e("HOST",response.url.host)
+                        serverIp = "http://${response.url.host}:3002"
+                    }
+                }
+        }
+       /* while (line != null) {
             Log.e("line",line)
             if (line.contains("wlan")) {
                 Log.e("URL","http://${line.substring(0,line.indexOf(" "))}:3002/ping")
@@ -198,7 +218,7 @@ class MainActivity : AppCompatActivity() {
                     }
             }
             line = bufferedReader.readLine()
-        }
+        }*/
     }
 
 }
