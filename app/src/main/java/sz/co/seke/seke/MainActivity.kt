@@ -44,6 +44,10 @@ class MainActivity : AppCompatActivity() {
     public fun removeItem(position:Int){
         itemList.removeAt(position)
         adapter.notifyDataSetChanged()
+        var total = 0F;
+        for (i in 0..itemList.size-1){
+            total+=itemList[i].price
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int,
