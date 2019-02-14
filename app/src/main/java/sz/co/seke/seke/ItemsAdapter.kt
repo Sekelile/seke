@@ -8,7 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-class ItemsAdapter (private val items: List<Item>) : RecyclerView.Adapter<ItemsAdapter.ItemViewholder>(){
+class ItemsAdapter (private val items: List<Item>,activity:MainActivity) : RecyclerView.Adapter<ItemsAdapter.ItemViewholder>(){
+    private val activity = activity
     class ItemViewholder(var view: View) : RecyclerView.ViewHolder(view){
         val textView: TextView
         val icon: AppCompatImageView
@@ -42,7 +43,9 @@ class ItemsAdapter (private val items: List<Item>) : RecyclerView.Adapter<ItemsA
             selectItem(it,items[p1])
         })
 
-
+        p0.icon.setOnClickListener {
+            activity.removeItem(p1)
+        }
     }
 
     fun selectItem(v:View,item:Item){

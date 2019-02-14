@@ -2,6 +2,7 @@ package sz.co.seke.seke
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.DhcpInfo
@@ -28,6 +29,7 @@ import android.text.format.Formatter.formatIpAddress
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.text.format.Formatter
+import org.json.JSONArray
 
 
 val MY_PERMISSIONS_REQUEST_CAMERA:Int = 1000;
@@ -38,6 +40,11 @@ class MainActivity : AppCompatActivity() {
     private var itemList: MutableList<Item> = mutableListOf()
     private lateinit var adapter: ItemsAdapter
     private var serverIp = ""
+
+    public fun removeItem(position:Int){
+        itemList.removeAt(position)
+        adapter.notifyDataSetChanged()
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<String>, grantResults: IntArray) {
@@ -119,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         val scannerView = findViewById<CodeScannerView>(R.id.scanner_view)
 
         val actionsConfig: MutableList<String> = mutableListOf()
-        adapter = ItemsAdapter(itemList)
+        adapter = ItemsAdapter(itemList,this)
 
         items_recycler_view.setHasFixedSize(true)
         items_recycler_view.layoutManager = LinearLayoutManager(this)
@@ -130,6 +137,30 @@ class MainActivity : AppCompatActivity() {
             scanner_view.visibility = View.VISIBLE
             main_ly.visibility = View.GONE
         }
+
+        pay_btn.setOnClickListener {
+            startActivity(Intent(MainActivity@this,ReceitListActivity::class.java))
+        }
+
+request_payement.setOnClickListener {
+    val items = JSONArray()
+    for (i in 0..itemList.size-1){
+        items.put(itemList[i].code)
+    }
+    Fuel.put("$serverIp/item")
+        .jsonBody(items.toString())
+        .response{request, response, result ->
+            Log.e("Payed",response.data.toString())
+            val intent = Intent(this,ReceitListActivity::class.java)
+            if(response.statusCode==200){
+                intent.putExtra("receipt",String(response.data))
+                startActivity(intent)
+            }else{
+                Toast.makeText(this,"Did not connect",Toast.LENGTH_LONG).show()
+            }
+
+        }
+}
     }
 
     fun scan(){
@@ -149,7 +180,7 @@ class MainActivity : AppCompatActivity() {
                         println(request)
                         println(response)
                         if(response.statusCode == 200){
-                            val itemObject:JSONObject = JSONObject(String(response.data))
+                            val itemObject = JSONObject(String(response.data))
                             Log.e("Itemobject",itemObject.toString())
                             itemList.add(Item(itemObject.getString("bar_code"),itemObject.getString("name"),itemObject.get("price").toString().toFloat()))
                             adapter.notifyDataSetChanged()
@@ -172,6 +203,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG).show()
             }
         }
+
     }
 
     override fun onBackPressed() {
@@ -185,11 +217,6 @@ class MainActivity : AppCompatActivity() {
     }
     
     fun getServerIp(){
-        val BUF: Int = 8 * 1024
-
-        val bufferedReader = BufferedReader(FileReader("/proc/net/arp"), BUF)
-        var line: String? = bufferedReader.readLine()
-
         val wifiMgr = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val wifiInfo = wifiMgr.connectionInfo
         val ip = wifiInfo.ipAddress
@@ -205,20 +232,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
         }
-       /* while (line != null) {
-            Log.e("line",line)
-            if (line.contains("wlan")) {
-                Log.e("URL","http://${line.substring(0,line.indexOf(" "))}:3002/ping")
-                Fuel.get("http://${line.substring(0,line.indexOf(" "))}:3002/ping")
-                    .response{ request, response, result ->  
-                        if(response.statusCode == 200){
-                            Log.e("HOST",response.url.host)
-                            serverIp = "http://${response.url.host}:3002"
-                        }
-                    }
-            }
-            line = bufferedReader.readLine()
-        }*/
     }
 
 }
