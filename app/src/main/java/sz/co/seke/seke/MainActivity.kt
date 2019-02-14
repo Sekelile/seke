@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         for (i in 0..itemList.size-1){
             total+=itemList[i].price
         }
+
+        total_text_view.text = "Total: E $total"
     }
 
     override fun onRequestPermissionsResult(requestCode: Int,
