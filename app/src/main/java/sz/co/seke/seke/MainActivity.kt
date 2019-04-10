@@ -181,6 +181,10 @@ request_payement.setOnClickListener {
                 main_ly.visibility = View.VISIBLE
                 codeScanner.stopPreview()
                 Log.e("Server ip",serverIp)
+                if(serverIp.length<7){
+                    Toast.makeText(this,"The server was not found",Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
                 Fuel.get("${serverIp}/item/${it.text}")
                     .response{ request, response, result ->
                         println(request)
